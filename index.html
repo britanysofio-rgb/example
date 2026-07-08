@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToxCase — Toxicology Case Generator</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <h1>ToxCase</h1>
+    <p class="tagline">Randomized toxicology cases with a pharmacotherapy focus — for teaching and self-study</p>
+  </div>
+</header>
+
+<main class="container">
+  <section class="controls" aria-label="Case generator controls">
+    <div class="control-group">
+      <label for="category">Toxin category</label>
+      <select id="category">
+        <option value="all">Any (random)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="difficulty">Difficulty</label>
+      <select id="difficulty">
+        <option value="all">Any</option>
+        <option value="1">Core</option>
+        <option value="2">Intermediate</option>
+        <option value="3">Advanced</option>
+      </select>
+    </div>
+    <div class="control-group buttons">
+      <button id="generate" class="btn primary">Generate new case</button>
+      <button id="print" class="btn">Print / Export</button>
+    </div>
+    <p class="hint">Tip: hand out the case with answers hidden, work through the stages together, then reveal the pharmacotherapy plan.</p>
+  </section>
+
+  <section id="case-area" class="case-area" hidden>
+    <!-- Populated by app.js -->
+  </section>
+
+  <section id="empty-state" class="empty-state">
+    <p>Click <strong>Generate new case</strong> to create a unique patient encounter.</p>
+    <p class="small">Every case randomizes the patient, dose, timing, vitals, and labs — consistent with the toxidrome — and computes weight-based antidote dosing for the generated patient.</p>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p><strong>For education only.</strong> Cases are simulated. Doses shown are common teaching references — always verify against current institutional protocols and a poison center (in the US: 1-800-222-1222) before applying to real patients.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
