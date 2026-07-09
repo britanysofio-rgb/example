@@ -17,9 +17,10 @@
 <main class="container">
   <section class="controls" aria-label="Case generator controls">
     <div class="control-group">
-      <label for="category">Toxin category</label>
-      <select id="category">
-        <option value="all">Any (random)</option>
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="unknown">Unknown ingestion — empiric (recommended)</option>
+        <option value="known">Known ingestion — history given</option>
       </select>
     </div>
     <div class="control-group">
@@ -31,11 +32,17 @@
         <option value="3">Advanced</option>
       </select>
     </div>
+    <div class="control-group">
+      <label for="category">Toxin category (leave on Any for a true blind case)</label>
+      <select id="category">
+        <option value="all">Any (random)</option>
+      </select>
+    </div>
     <div class="control-group buttons">
       <button id="generate" class="btn primary">Generate new case</button>
       <button id="print" class="btn">Print / Export</button>
     </div>
-    <p class="hint">Tip: hand out the case with answers hidden, work through the stages together, then reveal the pharmacotherapy plan.</p>
+    <p class="hint">In <strong>Unknown ingestion</strong> mode the history withholds the substance and confirmatory drug levels — the learner recognizes the toxidrome and treats empirically, then names the toxin. Reveal the answer to check. (Keep category on "Any" so the case stays blind.)</p>
   </section>
 
   <section id="case-area" class="case-area" hidden>

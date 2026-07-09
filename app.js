@@ -6,6 +6,13 @@
  * patient, dose, and timeline, then compute weight-based antidote dosing
  * for the generated patient so the numbers are internally consistent.
  *
+ * Two modes:
+ *   - "unknown" (empiric): the history withholds the substance and the
+ *     drug-identifying confirmatory labs (e.g. "Acetaminophen level") are
+ *     hidden from the case and revealed only in the answer. The learner
+ *     recognizes the toxidrome, treats empirically, and names the toxin.
+ *   - "known": the history names the substance and all labs are shown.
+ *
  * Teaching reference only — see the footer disclaimer.
  */
 
@@ -23,6 +30,9 @@ const FIRST_NAMES_M = ["James", "Omar", "Diego", "Kwame", "Liam", "Yusuf", "Noah
 
 // ---- Toxin / toxidrome dataset --------------------------------------------
 // Ranges are written as [low, high] and sampled to build a coherent picture.
+// Labs marked `confirmatory: true` name/identify the toxin and are hidden in
+// "unknown" mode (they "return later").  story = named history; blindStory =
+// empiric history with the substance withheld.
 const TOXINS = [
   {
     id: "acetaminophen",
@@ -31,13 +41,15 @@ const TOXINS = [
     difficulty: 1,
     agents: ["extra-strength acetaminophen tablets", "a combination cold-and-flu product", "acetaminophen/opioid tablets"],
     story: (p) => `${p.name} was found at home after an intentional ingestion of ${p.agentAmount} of ${p.agent}. ${p.pronounSubjectCap} initially felt well but now, ${p.hoursAgo} hours later, reports nausea, vomiting, and right-upper-quadrant discomfort.`,
+    blindStory: (p) => `${p.name} is brought in after a suspected intentional overdose ${p.hoursAgo} hours ago; the substance and amount are unknown. ${p.pronounSubjectCap} felt well at first but now reports nausea, repeated vomiting, and right-upper-quadrant discomfort.`,
     complaint: "Nausea, vomiting, and right-upper-quadrant pain after an intentional overdose",
+    blindComplaint: "Nausea, vomiting, and right-upper-quadrant pain hours after a suspected overdose",
     vitals: { hr: [70, 95], sbp: [110, 130], rr: [14, 18], temp: [36.6, 37.2], spo2: [97, 100] },
     labs: [
       { k: "AST", low: 45, high: 900, unit: "U/L", abnHigh: 40 },
       { k: "ALT", low: 55, high: 1100, unit: "U/L", abnHigh: 40 },
       { k: "INR", low: 1.2, high: 2.4, unit: "", dp: 1, abnHigh: 1.2 },
-      { k: "Acetaminophen level", low: 120, high: 260, unit: "mcg/mL", abnHigh: 20 },
+      { k: "Acetaminophen level", low: 120, high: 260, unit: "mcg/mL", abnHigh: 20, confirmatory: true },
     ],
     findings: ["RUQ tenderness on palpation", "Mild scleral icterus in later presentations", "Otherwise unremarkable exam"],
     toxidrome: "No classic toxidrome early — often deceptively well before hepatotoxicity",
@@ -51,7 +63,6 @@ const TOXINS = [
       antidote: "N-acetylcysteine (NAC)",
       mechanism: "Replenishes hepatic glutathione and directly scavenges the toxic metabolite NAPQI.",
       dosing: (p) => {
-        // 21-hour IV protocol
         const load = round(150 * p.weightKg);
         const d2 = round(50 * p.weightKg);
         const d3 = round(100 * p.weightKg);
@@ -72,7 +83,9 @@ const TOXINS = [
     difficulty: 1,
     agents: ["oxycodone tablets", "heroin", "fentanyl-contaminated pills", "methadone"],
     story: (p) => `Paramedics bring ${p.name} in after ${p.pronounSubject} was found unresponsive with a slow respiratory rate. Bystanders report ${p.pronounObject} using ${p.agent}. A used naloxone kit was nearby but empty.`,
+    blindStory: (p) => `Paramedics bring ${p.name} in after ${p.pronounSubject} was found unresponsive with a slow respiratory rate. There is no reliable history of what was taken or of any medical background.`,
     complaint: "Unresponsive with shallow, slow breathing",
+    blindComplaint: "Unresponsive with shallow, slow breathing",
     vitals: { hr: [40, 62], sbp: [90, 110], rr: [4, 9], temp: [36.0, 36.8], spo2: [80, 90] },
     labs: [
       { k: "Venous pCO2", low: 55, high: 78, unit: "mmHg", abnHigh: 45 },
@@ -105,7 +118,9 @@ const TOXINS = [
     difficulty: 3,
     agents: ["amitriptyline tablets", "nortriptyline capsules", "a bottle of dosulepin"],
     story: (p) => `${p.name} presents ${p.hoursAgo} hours after ingesting ${p.agentAmount} of ${p.agent}. ${p.pronounSubjectCap} is now drowsy and confused, and on the monitor you notice a widening QRS.`,
+    blindStory: (p) => `${p.name} is brought in ${p.hoursAgo} hours after a suspected overdose of unidentified pills. ${p.pronounSubjectCap} is now drowsy and confused, and on the monitor you notice a widening QRS.`,
     complaint: "Altered mental status and a wide-complex rhythm after antidepressant overdose",
+    blindComplaint: "Altered mental status with a wide-complex rhythm after an unknown overdose",
     vitals: { hr: [110, 140], sbp: [80, 100], rr: [16, 22], temp: [37.0, 38.2], spo2: [94, 99] },
     labs: [
       { k: "QRS duration", low: 110, high: 175, unit: "ms", abnHigh: 100 },
@@ -142,7 +157,9 @@ const TOXINS = [
     difficulty: 1,
     agents: ["diazepam tablets", "alprazolam tablets", "clonazepam tablets"],
     story: (p) => `${p.name} is brought in sedated and slurring after taking ${p.agentAmount} of ${p.agent}. ${p.pronounSubjectCap} is rousable to voice but keeps drifting off. Vital signs are relatively preserved.`,
+    blindStory: (p) => `${p.name} is brought in sedated and slurring after an unwitnessed ingestion of an unknown substance. ${p.pronounSubjectCap} is rousable to voice but keeps drifting off. Vital signs are relatively preserved.`,
     complaint: "Sedation and slurred speech after sedative ingestion",
+    blindComplaint: "Sedation and slurred speech after an unwitnessed ingestion",
     vitals: { hr: [60, 80], sbp: [100, 120], rr: [12, 16], temp: [36.4, 37.0], spo2: [94, 99] },
     labs: [
       { k: "Venous pCO2", low: 44, high: 55, unit: "mmHg", abnHigh: 45 },
@@ -174,10 +191,12 @@ const TOXINS = [
     difficulty: 2,
     agents: ["an organophosphate insecticide", "a carbamate pesticide", "malathion concentrate"],
     story: (p) => `A farm worker, ${p.name}, is brought in after occupational exposure to ${p.agent}. ${p.pronounSubjectCap} is drooling, sweating profusely, and has vomited several times. Staff note a garlic-like odor and copious secretions.`,
+    blindStory: (p) => `A farm worker, ${p.name}, collapses in the field and is brought in acutely ill; the exposure is unclear. ${p.pronounSubjectCap} is drooling, sweating profusely, and has vomited several times. Staff note a garlic-like odor and copious secretions.`,
     complaint: "Profuse secretions, sweating, and vomiting after pesticide exposure",
+    blindComplaint: "Profuse secretions, sweating, and vomiting after collapsing at work",
     vitals: { hr: [42, 58], sbp: [90, 110], rr: [22, 30], temp: [36.6, 37.4], spo2: [86, 93] },
     labs: [
-      { k: "RBC acetylcholinesterase", low: 10, high: 45, unit: "% of normal", abnLow: 80 },
+      { k: "RBC acetylcholinesterase", low: 10, high: 45, unit: "% of normal", abnLow: 80, confirmatory: true },
       { k: "Venous pH", low: 7.20, high: 7.33, unit: "", dp: 2, abnLow: 7.35 },
       { k: "Glucose", low: 90, high: 160, unit: "mg/dL" },
     ],
@@ -210,10 +229,12 @@ const TOXINS = [
     difficulty: 2,
     agents: ["aspirin tablets", "oil of wintergreen (methyl salicylate)", "bismuth subsalicylate"],
     story: (p) => `${p.name} presents ${p.hoursAgo} hours after ingesting ${p.agentAmount} of ${p.agent}, complaining of ringing in the ears and rapid breathing. ${p.pronounSubjectCap} appears anxious, diaphoretic, and hyperventilating.`,
+    blindStory: (p) => `${p.name} presents ${p.hoursAgo} hours after a suspected overdose of an unknown agent, complaining of ringing in the ears and rapid breathing. ${p.pronounSubjectCap} appears anxious, diaphoretic, and hyperventilating.`,
     complaint: "Tinnitus, hyperventilation, and diaphoresis",
+    blindComplaint: "Tinnitus, hyperventilation, and diaphoresis",
     vitals: { hr: [100, 125], sbp: [105, 125], rr: [26, 36], temp: [37.6, 39.0], spo2: [96, 100] },
     labs: [
-      { k: "Salicylate level", low: 45, high: 95, unit: "mg/dL", abnHigh: 30 },
+      { k: "Salicylate level", low: 45, high: 95, unit: "mg/dL", abnHigh: 30, confirmatory: true },
       { k: "Arterial pH", low: 7.42, high: 7.52, unit: "", dp: 2, abnHigh: 7.45 },
       { k: "Bicarbonate", low: 12, high: 18, unit: "mmol/L", abnLow: 22 },
       { k: "Anion gap", low: 16, high: 24, unit: "", abnHigh: 12 },
@@ -248,14 +269,16 @@ const TOXINS = [
     difficulty: 2,
     agents: ["a faulty gas furnace", "a running car in a closed garage", "a charcoal grill used indoors"],
     story: (p) => `${p.name} and family members present with headache, nausea, and dizziness after spending the night in a home with ${p.agent}. ${p.pronounSubjectCap} feels confused and reports the pulse oximeter at triage reads a reassuring 99%.`,
+    blindStory: (p) => `${p.name} and several family members present together with headache, nausea, and dizziness after being found unwell at home. ${p.pronounSubjectCap} feels confused, and the triage pulse oximeter reads a reassuring 99%.`,
     complaint: "Headache, dizziness, and confusion with a normal-looking pulse oximetry",
+    blindComplaint: "Headache, dizziness, and confusion — with a reassuring pulse oximetry — in several household members",
     vitals: { hr: [95, 115], sbp: [110, 130], rr: [18, 24], temp: [36.6, 37.2], spo2: [97, 100] },
     labs: [
-      { k: "Carboxyhemoglobin (COHb)", low: 22, high: 40, unit: "%", abnHigh: 3 },
+      { k: "Carboxyhemoglobin (COHb)", low: 22, high: 40, unit: "%", abnHigh: 3, confirmatory: true },
       { k: "Lactate", low: 3.0, high: 7.0, unit: "mmol/L", dp: 1, abnHigh: 2.0 },
       { k: "Venous pH", low: 7.25, high: 7.35, unit: "", dp: 2, abnLow: 7.35 },
     ],
-    findings: ["Headache, nausea, dizziness, confusion", "Normal SpO2 on standard pulse oximetry (it cannot distinguish COHb)", "Multiple people from the same environment affected"],
+    findings: ["Headache, nausea, dizziness, confusion", "Falsely normal SpO2 on standard pulse oximetry (it reads the bound hemoglobin as oxygenated)", "Multiple people from the same environment affected"],
     toxidrome: "Cellular asphyxiant — impaired O2 delivery and utilization despite 'normal' pulse ox",
     diagnosis: "Carbon monoxide poisoning; standard pulse oximetry is falsely reassuring — measure carboxyhemoglobin directly.",
     workup: [
@@ -281,14 +304,16 @@ const TOXINS = [
     difficulty: 2,
     agents: ["glipizide tablets", "glyburide tablets", "a relative's glimepiride"],
     story: (p) => `${p.name} is found diaphoretic and confused after taking ${p.agentAmount} of ${p.agent}. A bedside glucose reads ${p.glucose} mg/dL. ${p.pronounSubjectCap} improves briefly with juice but becomes drowsy again.`,
+    blindStory: (p) => `${p.name} is found diaphoretic and confused after a possible ingestion of unknown pills. A bedside glucose reads ${p.glucose} mg/dL. ${p.pronounSubjectCap} improves briefly with juice and IV dextrose but becomes drowsy and hypoglycemic again.`,
     complaint: "Recurrent hypoglycemia with confusion and diaphoresis",
+    blindComplaint: "Recurrent hypoglycemia with confusion and diaphoresis after an unknown ingestion",
     vitals: { hr: [95, 120], sbp: [110, 135], rr: [16, 20], temp: [36.4, 37.0], spo2: [97, 100] },
     labs: [
       { k: "Glucose (recurrent)", low: 32, high: 52, unit: "mg/dL", abnLow: 70 },
-      { k: "C-peptide", low: 3.5, high: 7.0, unit: "ng/mL", dp: 1, abnHigh: 3.0 },
+      { k: "C-peptide", low: 3.5, high: 7.0, unit: "ng/mL", dp: 1, abnHigh: 3.0, confirmatory: true },
       { k: "Potassium", low: 3.2, high: 3.8, unit: "mmol/L" },
     ],
-    findings: ["Diaphoresis, tremor, confusion; may seize with severe hypoglycemia", "Symptoms recur after dextrose boluses", "Elevated insulin and C-peptide (endogenous secretion)"],
+    findings: ["Diaphoresis, tremor, confusion; may seize with severe hypoglycemia", "Symptoms recur after dextrose boluses", "Recurrent hypoglycemia despite dextrose — an endogenous hyperinsulinism pattern"],
     toxidrome: "Endogenous hyperinsulinemic hypoglycemia",
     diagnosis: "Sulfonylurea-induced hypoglycemia — the danger is recurrence; dextrose alone is a temporizing measure, not a cure.",
     workup: [
@@ -317,10 +342,12 @@ const TOXINS = [
     difficulty: 3,
     agents: ["chronic digoxin therapy plus a new diuretic", "an accidental double-dose of digoxin", "foxglove/oleander plant ingestion"],
     story: (p) => `${p.name}, on ${p.agent}, presents with nausea, blurred yellow-green vision, and palpitations. The monitor shows a slow, irregular rhythm and the potassium is climbing.`,
+    blindStory: (p) => `${p.name}, an older patient on several cardiac medications ${p.pronounSubject} cannot fully name, presents with nausea, blurred yellow-green vision, and palpitations. The monitor shows a slow, irregular rhythm and the potassium is climbing.`,
     complaint: "Nausea, visual changes, and a bradydysrhythmia",
+    blindComplaint: "Nausea, yellow-green visual changes, and a bradydysrhythmia with rising potassium",
     vitals: { hr: [38, 55], sbp: [95, 120], rr: [16, 20], temp: [36.5, 37.0], spo2: [96, 100] },
     labs: [
-      { k: "Digoxin level", low: 3.2, high: 8.0, unit: "ng/mL", dp: 1, abnHigh: 2.0 },
+      { k: "Digoxin level", low: 3.2, high: 8.0, unit: "ng/mL", dp: 1, abnHigh: 2.0, confirmatory: true },
       { k: "Potassium", low: 5.4, high: 6.8, unit: "mmol/L", dp: 1, abnHigh: 5.0 },
       { k: "Creatinine", low: 1.4, high: 2.6, unit: "mg/dL", dp: 1, abnHigh: 1.2 },
     ],
@@ -353,13 +380,15 @@ const TOXINS = [
     difficulty: 3,
     agents: ["windshield washer fluid", "moonshine of uncertain origin", "an industrial solvent"],
     story: (p) => `${p.name} presents ${p.hoursAgo} hours after drinking ${p.agent}, now complaining of blurred vision described as 'like a snowstorm', headache, and abdominal pain. The anion gap is wide and vision is deteriorating.`,
+    blindStory: (p) => `${p.name} presents ${p.hoursAgo} hours after drinking an unknown liquid, now complaining of blurred vision described as 'like a snowstorm', headache, and abdominal pain. The anion gap is wide and vision is deteriorating.`,
     complaint: "Visual disturbance ('snowstorm') and abdominal pain after drinking a non-beverage alcohol",
+    blindComplaint: "Visual disturbance ('snowstorm') and abdominal pain with a wide anion gap",
     vitals: { hr: [95, 115], sbp: [105, 130], rr: [24, 32], temp: [36.6, 37.2], spo2: [97, 100] },
     labs: [
       { k: "Anion gap", low: 22, high: 34, unit: "", abnHigh: 12 },
       { k: "Osmolar gap", low: 18, high: 40, unit: "mOsm/kg", abnHigh: 10 },
       { k: "Arterial pH", low: 7.10, high: 7.28, unit: "", dp: 2, abnLow: 7.35 },
-      { k: "Methanol level", low: 30, high: 90, unit: "mg/dL", abnHigh: 20 },
+      { k: "Methanol level", low: 30, high: 90, unit: "mg/dL", abnHigh: 20, confirmatory: true },
     ],
     findings: ["Visual blurring / 'snowfield' vision, possible afferent pupillary defect", "Wide anion-gap metabolic acidosis with an osmolar gap", "Hyperventilation (Kussmaul), abdominal pain"],
     toxidrome: "Toxic alcohol: high anion gap + high osmolar gap metabolic acidosis",
@@ -388,7 +417,9 @@ const TOXINS = [
     difficulty: 3,
     agents: ["metoprolol tablets", "diltiazem extended-release capsules", "amlodipine tablets"],
     story: (p) => `${p.name} presents ${p.hoursAgo} hours after ingesting ${p.agentAmount} of ${p.agent}, now hypotensive and bradycardic and not responding to a fluid bolus. ${p.pronounSubjectCap} is drowsy with cool extremities.`,
+    blindStory: (p) => `${p.name} presents ${p.hoursAgo} hours after a suspected overdose of unknown cardiac medications, now hypotensive and bradycardic and not responding to a fluid bolus. ${p.pronounSubjectCap} is drowsy with cool extremities.`,
     complaint: "Refractory hypotension and bradycardia after a cardiovascular-drug overdose",
+    blindComplaint: "Refractory hypotension and bradycardia unresponsive to fluids",
     vitals: { hr: [38, 55], sbp: [65, 85], rr: [14, 20], temp: [36.2, 36.8], spo2: [94, 99] },
     labs: [
       { k: "Glucose", low: 160, high: 300, unit: "mg/dL", abnHigh: 140 },
@@ -427,10 +458,12 @@ const TOXINS = [
     difficulty: 2,
     agents: ["adult ferrous sulfate tablets", "prenatal iron supplements", "a bottle of iron-containing vitamins"],
     story: (p) => `${p.name} presents after ingesting ${p.agentAmount} of ${p.agent}. ${p.pronounSubjectCap} has had repeated vomiting and now bloody diarrhea, with abdominal pain and lethargy. An abdominal film shows radiopaque tablets.`,
+    blindStory: (p) => `${p.name} presents after a suspected ingestion of unknown tablets. ${p.pronounSubjectCap} has had repeated vomiting and now bloody diarrhea, with abdominal pain and lethargy. An abdominal film shows radiopaque tablets.`,
     complaint: "Vomiting, bloody diarrhea, and abdominal pain after iron ingestion",
+    blindComplaint: "Vomiting, bloody diarrhea, and abdominal pain with radiopaque tablets on X-ray",
     vitals: { hr: [110, 135], sbp: [85, 105], rr: [22, 30], temp: [37.0, 37.8], spo2: [96, 100] },
     labs: [
-      { k: "Serum iron", low: 400, high: 900, unit: "mcg/dL", abnHigh: 150 },
+      { k: "Serum iron", low: 400, high: 900, unit: "mcg/dL", abnHigh: 150, confirmatory: true },
       { k: "Anion gap", low: 16, high: 24, unit: "", abnHigh: 12 },
       { k: "Venous pH", low: 7.20, high: 7.32, unit: "", dp: 2, abnLow: 7.35 },
       { k: "Glucose", low: 150, high: 220, unit: "mg/dL", abnHigh: 140 },
@@ -492,7 +525,7 @@ function sampleLabs(specs) {
     let abnormal = false;
     if (l.abnHigh != null && val > l.abnHigh) abnormal = true;
     if (l.abnLow != null && val < l.abnLow) abnormal = true;
-    return { k: l.k, v: `${val}${l.unit ? " " + l.unit : ""}`, abnormal };
+    return { k: l.k, v: `${val}${l.unit ? " " + l.unit : ""}`, abnormal, confirmatory: !!l.confirmatory };
   });
 }
 
@@ -501,38 +534,58 @@ function esc(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
-function renderCase(toxin, patient) {
+function statHtml(l) {
+  return `<div class="stat${l.abnormal ? " abn" : ""}"><div class="k">${esc(l.k)}</div><div class="v">${esc(l.v)}</div></div>`;
+}
+
+function renderCase(toxin, patient, mode) {
+  const blind = mode === "unknown";
   const agent = pick(toxin.agents);
   const agentAmount = pick(["a handful", "roughly 20 tablets", "an unknown quantity", "most of a bottle", "about 30 tablets", "a large ingestion"]);
   const p = { ...patient, agent, agentAmount };
 
   const vitals = sampleVitals(toxin.vitals);
-  const labs = sampleLabs(toxin.labs);
+  const allLabs = sampleLabs(toxin.labs);
+  // In empiric mode, hide the drug-identifying confirmatory labs from the case.
+  const caseLabs = blind ? allLabs.filter((l) => !l.confirmatory) : allLabs;
+  const confirmLabs = blind ? allLabs.filter((l) => l.confirmatory) : [];
+
   const rxList = toxin.pharm.dosing(p);
+
+  const story = blind ? toxin.blindStory(p) : toxin.story(p);
+  const complaint = blind ? toxin.blindComplaint : toxin.complaint;
 
   const vitalsHtml = Object.entries(vitals).map(([k, v]) =>
     `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join("");
-
-  const labsHtml = labs.map((l) =>
-    `<div class="stat${l.abnormal ? " abn" : ""}"><div class="k">${esc(l.k)}</div><div class="v">${esc(l.v)}</div></div>`).join("");
-
+  const labsHtml = caseLabs.map(statHtml).join("");
   const findingsHtml = toxin.findings.map((f) => `<li>${esc(f)}</li>`).join("");
   const workupHtml = toxin.workup.map((w) => `<li>${esc(w)}</li>`).join("");
   const rxHtml = rxList.map((r) =>
     `<div class="rx"><span class="drug">${esc(r.drug)}:</span> <span class="dose">${esc(r.dose)}</span></div>`).join("");
   const supportiveHtml = toxin.pharm.supportive.map((s) => `<li>${esc(s)}</li>`).join("");
 
+  const confirmHtml = confirmLabs.length
+    ? `<p><strong>Confirmatory studies (resulted later — you should have treated before these returned):</strong></p>
+       <div class="labs-grid">${confirmLabs.map(statHtml).join("")}</div>`
+    : "";
+
+  const labsNote = blind
+    ? `<span class="pill" style="margin-left:auto">confirmatory levels pending</span>`
+    : `<span class="pill" style="margin-left:auto">abnormal in red</span>`;
+
   const diffLabel = { 1: "Core", 2: "Intermediate", 3: "Advanced" }[toxin.difficulty];
+  const modeLabel = blind ? "Unknown ingestion (empiric)" : "Known ingestion";
 
   return `
     <article class="card">
       <p class="pill">Presentation</p>
       <h2 class="case-title">${esc(p.name)} — ${p.age} y/o ${p.female ? "female" : "male"}, ${p.weightKg} kg</h2>
       <div class="case-meta">
+        <span class="pill">${esc(modeLabel)}</span>
         <span class="pill">${esc(diffLabel)}</span>
       </div>
-      <p style="margin-top:0.8rem">${esc(toxin.story(p))}</p>
-      <p><strong>Chief concern:</strong> ${esc(toxin.complaint)}</p>
+      <p style="margin-top:0.8rem">${esc(story)}</p>
+      <p><strong>Chief concern:</strong> ${esc(complaint)}</p>
     </article>
 
     <article class="card">
@@ -546,30 +599,32 @@ function renderCase(toxin, patient) {
     </article>
 
     <article class="card">
-      <h2><span class="num">3</span> Labs & studies <span class="pill" style="margin-left:auto">abnormal in red</span></h2>
+      <h2><span class="num">3</span> Labs &amp; studies ${labsNote}</h2>
       <div class="labs-grid">${labsHtml}</div>
     </article>
 
     <article class="card">
       <h2><span class="num">4</span> Student prompts</h2>
       <ul class="tight">
-        <li>What toxidrome does this fit, and what is your leading diagnosis?</li>
-        <li>What is your targeted diagnostic workup?</li>
-        <li>What is the definitive pharmacotherapy — agent, mechanism, and dose for this patient?</li>
-        <li>What supportive care and monitoring does this patient need?</li>
+        <li>What toxidrome do these vitals, exam, and labs fit?</li>
+        <li><strong>Identify the most likely toxin (or toxin class) — commit to a specific answer.</strong></li>
+        <li>What empiric treatment would you start <em>now</em>, before any confirmatory level returns?</li>
+        <li>What confirmatory studies would you send, and what supportive care and monitoring does this patient need?</li>
       </ul>
     </article>
 
     <details class="card answer">
-      <summary>Reveal answer & pharmacotherapy plan</summary>
+      <summary>Reveal answer &amp; pharmacotherapy plan</summary>
       <div>
+        <p><strong>Most likely toxin:</strong> ${esc(toxin.name)}</p>
         <p><strong>Category:</strong> ${esc(toxin.category)}</p>
         <p><strong>Toxidrome:</strong> ${esc(toxin.toxidrome)}</p>
         <p><strong>Diagnosis:</strong> ${esc(toxin.diagnosis)}</p>
+        ${confirmHtml}
         <p><strong>Targeted workup:</strong></p>
         <ul class="tight">${workupHtml}</ul>
 
-        <h2 style="margin-top:1rem"><span class="num">Rx</span> Pharmacotherapy — ${esc(toxin.pharm.antidote)}</h2>
+        <h2 style="margin-top:1rem"><span class="num">Rx</span> Empiric pharmacotherapy — ${esc(toxin.pharm.antidote)}</h2>
         <p><em>${esc(toxin.pharm.mechanism)}</em></p>
         ${rxHtml}
         <p><strong>Supportive care:</strong></p>
@@ -583,6 +638,7 @@ function renderCase(toxin, patient) {
 // ---- Controller ------------------------------------------------------------
 function init() {
   const categorySel = document.getElementById("category");
+  const modeSel = document.getElementById("mode");
   const difficultySel = document.getElementById("difficulty");
   const generateBtn = document.getElementById("generate");
   const printBtn = document.getElementById("print");
@@ -610,7 +666,7 @@ function init() {
     }
     const toxin = pick(pool);
     const patient = buildPatient();
-    caseArea.innerHTML = renderCase(toxin, patient);
+    caseArea.innerHTML = renderCase(toxin, patient, modeSel.value);
     caseArea.hidden = false;
     emptyState.hidden = true;
     window.scrollTo({ top: caseArea.offsetTop - 20, behavior: "smooth" });
