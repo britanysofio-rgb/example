@@ -529,7 +529,6 @@ function renderCase(toxin, patient) {
       <p class="pill">Presentation</p>
       <h2 class="case-title">${esc(p.name)} — ${p.age} y/o ${p.female ? "female" : "male"}, ${p.weightKg} kg</h2>
       <div class="case-meta">
-        <span class="pill">${esc(toxin.category)}</span>
         <span class="pill">${esc(diffLabel)}</span>
       </div>
       <p style="margin-top:0.8rem">${esc(toxin.story(p))}</p>
@@ -564,6 +563,7 @@ function renderCase(toxin, patient) {
     <details class="card answer">
       <summary>Reveal answer & pharmacotherapy plan</summary>
       <div>
+        <p><strong>Category:</strong> ${esc(toxin.category)}</p>
         <p><strong>Toxidrome:</strong> ${esc(toxin.toxidrome)}</p>
         <p><strong>Diagnosis:</strong> ${esc(toxin.diagnosis)}</p>
         <p><strong>Targeted workup:</strong></p>
