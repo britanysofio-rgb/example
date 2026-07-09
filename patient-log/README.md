@@ -12,3 +12,4 @@ are referred to by age and sex only (e.g., "58-year-old male").
 
 | Date | Note | Chief complaint |
 |------|------|-----------------|
+| 2026-07-09 | [2026-07-09-clonazepam-ingestion.md](2026-07-09-clonazepam-ingestion.md) | Ingestion of 4–5 clonazepam tablets |
